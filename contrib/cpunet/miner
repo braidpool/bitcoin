@@ -16,6 +16,7 @@ import time
 import asyncio
 import zmq
 import zmq.asyncio
+from zmq.utils.monitor import recv_monitor_message
 import signal
 
 # Add bitcoin's test harness framework to our import path.
@@ -61,6 +62,8 @@ class CPUMiner():
         self.zmqSubSocket = self.zmqContext.socket(zmq.SUB)
         self.zmqSubSocket.setsockopt(zmq.RCVHWM, 0)
         self.zmqSubSocket.setsockopt_string(zmq.SUBSCRIBE, "sequence")
+        zmqFlags = zmq.EVENT_CONNECTED|zmq.EVENT_CLOSED
+        self.zmqMonitor = self.zmqSubSocket.get_monitor_socket(zmqFlags)
         self.zmqSubSocket.connect("tcp://127.0.0.1:28338")
 
         if args.max_blocks is not None:
@@ -109,9 +112,24 @@ class CPUMiner():
             logging.error("bitcoin-cli returned an error code %d\n\nstdout = %s \n\nstderr = %s\n"%(bcli_process.returncode, stdout, stderr))
             self.stop()
         logging.debug("    result = %s"%(stdout))
+        logging.debug("    stdout = %s"%(stdout))
+        logging.debug("    stderr = %s"%(stderr))
         if isinstance(stdout, bytes):
             stdout = stdout.decode('utf8')
         return stdout.strip()
+
+    async def handle_zmq_monitor(self):
+        mon_evt = await recv_monitor_message(self.zmqMonitor)
+        if mon_evt['event'] == zmq.EVENT_CONNECTED:
+            logging.info("ZMQ connected to %s", mon_evt['endpoint'].decode('utf-8'))
+            asyncio.ensure_future(self.handle_zmq_monitor())
+        elif mon_evt['event'] == zmq.EVENT_CLOSED:
+            logging.error("ZMQ connection closed to %s", mon_evt['endpoint'].decode('utf-8'))
+            logging.error("    pass `-zmqpubsequence=%s` to bitcoind on startup",
+                          mon_evt['endpoint'].decode('utf-8'))
+            self.stop()
+        else:
+            logging.error("Unknown ZMQ Monitor event received: %s", mon_evt)
 
     async def handle_zmq(self):
         topic, body, seq = await self.zmqSubSocket.recv_multipart()
@@ -126,6 +144,11 @@ class CPUMiner():
                 logging.info("Connected new block tip %s"%hash)
                 if self.mining_process.returncode == None: # has not terminated yet
                     self.mining_process.terminate()        # someone else mined this block
+            else:
+                logging.debug("Saw ZMQ sequence message with unhandled label=%s"%label)
+        else:
+            logging.error("ZMQ message with unknown topic: %s"%topic)
+
         asyncio.ensure_future(self.handle_zmq())
 
     async def handle_grind(self):
@@ -189,6 +212,7 @@ class CPUMiner():
 
             # Submit block
             r = await self.bitcoin_cli("-stdin", "submitblock", input=block.serialize().hex().encode('utf8'))
+            logging.debug("Submitting block: %s", block.serialize().hex())
             if r != "":
                 logging.warning("submitblock returned %s for height %d hash %s", r, tmpl["height"], block.hash)
 
@@ -238,11 +262,14 @@ class CPUMiner():
 
     def start(self):
         self.loop.add_signal_handler(signal.SIGINT, self.stop)
+        self.loop.create_task(self.handle_zmq_monitor())
         self.loop.create_task(self.handle_zmq())
         self.loop.create_task(self.handle_grind())
         self.loop.run_forever()
 
     def stop(self):
+        for task in asyncio.all_tasks():
+            task.cancel()
         self.loop.stop()
         self.zmqContext.destroy()
 
