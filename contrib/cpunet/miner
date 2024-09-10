@@ -56,6 +56,9 @@ CBlockHeader.calc_sha256 = CBlockHeader_calc_sha256
 
 class CPUMiner():
     def __init__(self, args):
+        # keep track of chain tip since bitcoind seems to have a race condition.
+        self.tip = None
+
         self.loop = asyncio.new_event_loop()
         self.zmqContext = zmq.asyncio.Context()
 
@@ -132,6 +135,8 @@ class CPUMiner():
             logging.error("Unknown ZMQ Monitor event received: %s", mon_evt)
 
     async def handle_zmq(self):
+        if self.tip == None:
+            self.tip = json.loads(await self.bitcoin_cli("getblockchaininfo"))["bestblockhash"]
         topic, body, seq = await self.zmqSubSocket.recv_multipart()
         sequence = "Unknown"
         if len(seq) == 4:
@@ -142,6 +147,7 @@ class CPUMiner():
             mempool_sequence = None if len(body) != 32+1+8 else struct.unpack("<Q", body[32+1:])[0]
             if label == 'C': # Connected a new block tip
                 logging.info("Connected new block tip %s"%hash)
+                self.tip = hash
                 if self.mining_process.returncode == None: # has not terminated yet
                     self.mining_process.terminate()        # someone else mined this block
             else:
@@ -158,8 +164,15 @@ class CPUMiner():
             self.stop()
 
         # gbt
-        tmpl = json.loads(await self.bitcoin_cli("getblocktemplate", '{"rules":["segwit"]}'))
-        logging.debug("GBT template: %s", tmpl)
+        while True:
+            tmpl = json.loads(await self.bitcoin_cli("getblocktemplate", '{"rules":["segwit"]}'))
+            logging.debug("GBT template: %s", tmpl)
+            if tmpl["previousblockhash"] == self.tip:
+                break
+            else:
+                logging.warning("getblocktemplate returned a block with the wrong previousblockhash")
+                logging.warning("\ttip =               ", self.tip)
+                logging.warning("\tpreviousblockhash = ", tmpl["previousblockhash"])
 
         # Get address and scriptPubKey for reward
         self.reward_addr, self.reward_spk = await self.get_reward_addr_spk(tmpl["height"])
