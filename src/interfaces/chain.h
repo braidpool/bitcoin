@@ -131,6 +131,10 @@ class Chain
 public:
     virtual ~Chain() = default;
 
+    // Removes the transaction from the mempool and returns true if it was
+    // removed. Returns false if the transaction was not in the mempool.
+    virtual bool removeTxFromMempool(const uint256& txid) = 0;
+
     //! Get current chain height, not including genesis block (returns 0 if
     //! chain only contains genesis block, nullopt if chain does not contain
     //! any blocks)
