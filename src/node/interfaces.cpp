@@ -553,6 +553,19 @@ public:
         LOCK(::cs_main);
         return Assert(chainman().ActiveChain()[height])->GetBlockHash();
     }
+    bool removeTxFromMempool(const uint256& txid) override
+    {
+        NodeContext& node = m_node;
+        if (!node.mempool) return false;
+        CTxMemPool& mempool = *node.mempool;
+        LOCK(mempool.cs);
+        CTransactionRef tx = mempool.get(txid);
+        if (tx) {
+            mempool.removeRecursive(*tx, MemPoolRemovalReason::MANUAL);
+            return true;
+        }
+        return false;
+    }
     bool haveBlockOnDisk(int height) override
     {
         LOCK(::cs_main);
