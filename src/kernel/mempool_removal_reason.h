@@ -17,6 +17,7 @@ enum class MemPoolRemovalReason {
     BLOCK,       //!< Removed for block
     CONFLICT,    //!< Removed for conflict with in-block transaction
     REPLACED,    //!< Removed for replacement
+    MANUAL,      //!< Manually removed
 };
 
 std::string RemovalReasonToString(const MemPoolRemovalReason& r) noexcept;
