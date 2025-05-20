@@ -70,6 +70,7 @@ interface Chain $Proxy.wrap("interfaces::Chain") {
     deleteRwSettings @51 (context :Proxy.Context, name :Text, action: Int32) -> (result :Bool);
     requestMempoolTransactions @52 (context :Proxy.Context, notifications :ChainNotifications) -> ();
     hasAssumedValidChain @53 (context :Proxy.Context) -> (result :Bool);
+    removeTxFromMempool @54 (context :Proxy.Context, txid :Data) -> (result :Bool);
 }
 
 interface ChainNotifications $Proxy.wrap("interfaces::Chain::Notifications") {
@@ -88,10 +89,9 @@ interface ChainClient $Proxy.wrap("interfaces::ChainClient") {
     verify @2 (context :Proxy.Context) -> (result :Bool);
     load @3 (context :Proxy.Context) -> (result :Bool);
     start @4 (context :Proxy.Context, scheduler :Void) -> ();
-    flush @5 (context :Proxy.Context) -> ();
-    stop @6 (context :Proxy.Context) -> ();
-    setMockTime @7 (context :Proxy.Context, time :Int64) -> ();
-    schedulerMockForward @8 (context :Proxy.Context, time :Int64) -> ();
+    stop @5 (context :Proxy.Context) -> ();
+    setMockTime @6 (context :Proxy.Context, time :Int64) -> ();
+    schedulerMockForward @7 (context :Proxy.Context, time :Int64) -> ();
 }
 
 struct FeeCalculation $Proxy.wrap("FeeCalculation") {
