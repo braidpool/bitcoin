@@ -258,6 +258,49 @@ static RPCHelpMan testmempoolaccept()
     };
 }
 
+
+static RPCHelpMan removetxfrommempool()
+{
+    return RPCHelpMan{"removetxfrommempool",
+        "Removes a transaction from the mempool.\n"
+        "This can be used for testing purposes, removing stuck transactions, or clearing conflicting transactions.\n"
+        "\nWarning: This will remove the specified transaction AND all of its descendants from the mempool.\n"
+        "Descendants are transactions that spend outputs from this transaction or any of its descendants.\n",
+        {
+            {"txid", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "The transaction id to remove from the mempool"},
+        },
+        RPCResult{
+            RPCResult::Type::OBJ, "", "",
+            {
+                {RPCResult::Type::BOOL, "removed", "True if the transaction was in the mempool and was successfully removed"},
+            }
+        },
+        RPCExamples{
+            HelpExampleCli("removetxfrommempool", "\"mytxid\"")
+            + HelpExampleRpc("removetxfrommempool", "\"mytxid\"")
+        },
+        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
+        {
+            uint256 hash = ParseHashV(request.params[0], "txid");
+            NodeContext& node = EnsureAnyNodeContext(request.context);
+            CTxMemPool& mempool = EnsureMemPool(node);
+            UniValue result(UniValue::VOBJ);
+            bool removed = false;
+            {
+                LOCK(mempool.cs);
+                CTransactionRef tx = mempool.get(hash);
+                if (tx) {
+                    // Transaction found in mempool, remove it and its descendants
+                    mempool.removeRecursive(*tx, MemPoolRemovalReason::MANUAL);
+                    removed = true;
+                }
+            }
+            result.pushKV("removed", removed);
+            return result;
+        },
+    };
+}
+
 static std::vector<RPCResult> MempoolEntryDescription()
 {
     return {
@@ -1146,6 +1189,7 @@ void RegisterMempoolRPCCommands(CRPCTable& t)
         {"blockchain", &savemempool},
         {"hidden", &getorphantxs},
         {"rawtransactions", &submitpackage},
+        {"blockchain", &removetxfrommempool},
     };
     for (const auto& c : commands) {
         t.appendCommand(c.name, &c);
