@@ -16,6 +16,117 @@ class RPCMempoolInfoTest(BitcoinTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
 
+    def test_removetxfrommempool(self):
+        """Test for removetxfrommempool RPC functionality"""
+        self.log.info("Starting removetxfrommempool tests")
+        node = self.nodes[0]
+        initial_mempool_size = len(node.getrawmempool())
+
+        # Basic transaction removal
+        tx1 = self.wallet.send_self_transfer(from_node=node)
+        txid1 = tx1["txid"]
+        assert txid1 in node.getrawmempool()
+        assert_equal(len(node.getrawmempool()), initial_mempool_size + 1)
+        result = node.removetxfrommempool(txid1)
+        assert_equal(result["removed"], True)
+
+        # Verify transaction is no longer in mempool
+        assert txid1 not in node.getrawmempool()
+        assert_equal(len(node.getrawmempool()), initial_mempool_size)
+
+        # Removing non-existent transaction
+        fake_txid = "0" * 64
+        result = node.removetxfrommempool(fake_txid)
+        assert_equal(result["removed"], False)
+
+        # Recursive removal (parent-child transactions)
+        # Create parent transaction
+        parent_tx = self.wallet.send_self_transfer(from_node=node)
+        parent_txid = parent_tx["txid"]
+
+        # Create child transaction spending from parent
+        child_tx = self.wallet.send_self_transfer(
+            from_node=node,
+            utxo_to_spend=parent_tx["new_utxo"]
+        )
+        child_txid = child_tx["txid"]
+        mempool = node.getrawmempool()
+        assert parent_txid in mempool
+        assert child_txid in mempool
+        assert_equal(len(mempool), initial_mempool_size + 2)
+
+        # Remove parent transaction
+        result = node.removetxfrommempool(parent_txid)
+        assert_equal(result["removed"], True)
+
+        # Verify both parent and child are removed
+        mempool = node.getrawmempool()
+        assert parent_txid not in mempool
+        assert child_txid not in mempool
+        assert_equal(len(mempool), initial_mempool_size)
+
+        # Transaction chain removal
+        # Create a chain of 3 transactions: tx1 -> tx2 -> tx3
+        chain_tx1 = self.wallet.send_self_transfer(from_node=node)
+        chain_tx2 = self.wallet.send_self_transfer(
+            from_node=node,
+            utxo_to_spend=chain_tx1["new_utxo"]
+        )
+        chain_tx3 = self.wallet.send_self_transfer(
+            from_node=node,
+            utxo_to_spend=chain_tx2["new_utxo"]
+        )
+
+        # Verify all transactions are in mempool
+        mempool = node.getrawmempool()
+        assert_equal(len(mempool), initial_mempool_size + 3)
+        for tx in [chain_tx1, chain_tx2, chain_tx3]:
+            assert tx["txid"] in mempool
+
+        # Remove the middle transaction (chain_tx2)
+        result = node.removetxfrommempool(chain_tx2["txid"])
+        assert_equal(result["removed"], True)
+
+        # chain_tx2 and chain_tx3 should be removed, chain_tx1 should remain
+        mempool = node.getrawmempool()
+        assert chain_tx1["txid"] in mempool
+        assert chain_tx2["txid"] not in mempool
+        assert chain_tx3["txid"] not in mempool
+        assert_equal(len(mempool), initial_mempool_size + 1)
+
+        # Test with invalid txid format
+        assert_raises_rpc_error(-8, "txid must be of length 64", node.removetxfrommempool, "invalid")
+
+        # Test with wrong length hex (too short)
+        assert_raises_rpc_error(-8, "txid must be of length 64", node.removetxfrommempool, "a" * 63)
+
+        # Test with wrong length hex (too long)
+        assert_raises_rpc_error(-8, "txid must be of length 64", node.removetxfrommempool, "a" * 65)
+
+        # Test with no parameters
+        assert_raises_rpc_error(-1, "", node.removetxfrommempool)
+
+        # Test with valid hex but non-existent txid
+        valid_but_fake_txid = "a" * 64
+        result = node.removetxfrommempool(valid_but_fake_txid)
+        assert_equal(result["removed"], False)
+
+        # Test removing the same transaction twice
+        double_remove_tx = self.wallet.send_self_transfer(from_node=node)
+        double_remove_txid = double_remove_tx["txid"]
+        result1 = node.removetxfrommempool(double_remove_txid)
+        assert_equal(result1["removed"], True)
+        result2 = node.removetxfrommempool(double_remove_txid)
+        assert_equal(result2["removed"], False)
+
+        # Clean up remaining transactions
+        node.removetxfrommempool(chain_tx1["txid"])
+
+        # Verify mempool is clean
+        assert_equal(len(node.getrawmempool()), initial_mempool_size)
+
+        self.log.info("All removetxfrommempool tests completed successfully")
+
     def run_test(self):
         self.wallet = MiniWallet(self.nodes[0])
         confirmed_utxo = self.wallet.get_utxo()
@@ -94,6 +205,8 @@ class RPCMempoolInfoTest(BitcoinTestFramework):
         self.log.info("Missing txid")
         assert_raises_rpc_error(-3, "Missing txid", self.nodes[0].gettxspendingprevout, [{'vout' : 3}])
 
+        self.log.info("Test removetxfrommempool RPC")
+        self.test_removetxfrommempool()
 
 if __name__ == '__main__':
     RPCMempoolInfoTest(__file__).main()
