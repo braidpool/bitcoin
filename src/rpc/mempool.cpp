@@ -288,7 +288,7 @@ static RPCHelpMan removetxfrommempool()
             bool removed = false;
             {
                 LOCK(mempool.cs);
-                CTransactionRef tx = mempool.get(hash);
+                CTransactionRef tx = mempool.get(Txid::FromUint256(hash));
                 if (tx) {
                     // Transaction found in mempool, remove it and its descendants
                     mempool.removeRecursive(*tx, MemPoolRemovalReason::MANUAL);
