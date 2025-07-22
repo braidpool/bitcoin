@@ -81,6 +81,11 @@ class Mining
 public:
     virtual ~Mining() = default;
 
+    // This method will remove the specified transaction and all of its descendants
+    // (transactions that spend outputs from this transaction or its descendants)
+    // from the mempool.
+    virtual bool removeTxFromMempool(const uint256& txid) = 0;
+
     //! If this chain is exclusively used for testing
     virtual bool isTestChain() = 0;
 
