@@ -3,18 +3,20 @@
 # file COPYING or https://opensource.org/license/mit/.
 
 add_library(bitcoin_ipc STATIC EXCLUDE_FROM_ALL
-  capnp/chain.cpp
   capnp/mining.cpp
   capnp/protocol.cpp
   interfaces.cpp
   process.cpp
 )
 
+<<<<<<< HEAD
 target_capnp_sources(bitcoin_ipc ${CMAKE_CURRENT_SOURCE_DIR}
   capnp/chain.capnp
+=======
+target_capnp_sources(bitcoin_ipc ${PROJECT_SOURCE_DIR}
+>>>>>>> 93053f79d7 (Revert "Merge remote-tracking branch 'author-ipc/pr/ipc-chain' into cmempool")
   capnp/common.capnp
   capnp/echo.capnp
-  capnp/handler.capnp
   capnp/init.capnp
   capnp/mining.capnp
 )
