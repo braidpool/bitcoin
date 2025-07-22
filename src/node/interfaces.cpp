@@ -826,7 +826,7 @@ public:
         return result;
     }
     bool updateRwSetting(const std::string& name,
-                         interfaces::SettingsUpdate update_settings_func) override
+                         const interfaces::SettingsUpdate& update_settings_func) override
     {
         std::optional<interfaces::SettingsAction> action;
         args().LockSettings([&](common::Settings& settings) {

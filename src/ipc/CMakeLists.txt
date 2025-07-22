@@ -3,7 +3,6 @@
 # file COPYING or https://opensource.org/license/mit/.
 
 add_library(bitcoin_ipc STATIC EXCLUDE_FROM_ALL
-  capnp/chain.cpp
   capnp/mining.cpp
   capnp/protocol.cpp
   interfaces.cpp
@@ -11,10 +10,8 @@ add_library(bitcoin_ipc STATIC EXCLUDE_FROM_ALL
 )
 
 target_capnp_sources(bitcoin_ipc ${CMAKE_CURRENT_SOURCE_DIR}
-  capnp/chain.capnp
   capnp/common.capnp
   capnp/echo.capnp
-  capnp/handler.capnp
   capnp/init.capnp
   capnp/mining.capnp
 )
