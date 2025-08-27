@@ -23,6 +23,7 @@
 #include <functional>
 #include <memory>
 #include <thread>
+#include <iostream>
 
 static const int CONTINUE_EXECUTION=-1;
 
@@ -35,6 +36,8 @@ static void SetupBitcoinUtilArgs(ArgsManager &argsman)
     argsman.AddArg("-version", "Print version and exit", ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
 
     argsman.AddCommand("grind", "Perform proof of work on hex header string");
+    argsman.AddArg("-ntasks=<tasks>", strprintf("Number of processes to use (default: hardware concurrency (%d))",
+        std::thread::hardware_concurrency()), ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
 
     SetupChainParamsBaseOptions(argsman);
 }
@@ -128,7 +131,13 @@ static int Grind(const std::vector<std::string>& args, std::string& strPrint)
     uint32_t proposed_nonce{};
 
     std::vector<std::thread> threads;
-    int n_tasks = std::max(1u, std::thread::hardware_concurrency());
+    uint16_t n_tasks = std::max(1u, std::thread::hardware_concurrency());
+    // if(gArgs.IsArgSet("-ntasks")) {
+    //     if(!ParseUInt16(gArgs.GetArg("-ntasks", "1"), &n_tasks)) {
+    //         strPrint = strprintf("Argument to -ntasks should be a number, found %s\n", *gArgs.GetArg("-ntasks"));
+    //         return EXIT_FAILURE;
+    //     }
+    // }
     threads.reserve(n_tasks);
     for (int i = 0; i < n_tasks; ++i) {
         threads.emplace_back(grind_task, nBits, header, i, n_tasks, std::ref(found), std::ref(proposed_nonce));

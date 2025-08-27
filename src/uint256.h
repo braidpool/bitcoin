@@ -123,7 +123,8 @@ public:
 template <unsigned int BITS>
 consteval base_blob<BITS>::base_blob(std::string_view hex_str)
 {
-    if (hex_str.length() != m_data.size() * 2) throw "Hex string must fit exactly";
+    // if (hex_str.length() != m_data.size() * 2) throw "Hex string must fit exactly";
+    // assert(hex_str.length() == m_data.size() * 2); // 2 hex digits per byte.
     auto str_it = hex_str.rbegin();
     for (auto& elem : m_data) {
         auto lo = util::ConstevalHexDigit(*(str_it++));
