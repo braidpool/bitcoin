@@ -982,7 +982,7 @@ public:
         if (!node.mempool) return false;
         CTxMemPool& mempool = *node.mempool;
         LOCK(mempool.cs);
-        CTransactionRef tx = mempool.get(txid);
+        CTransactionRef tx = mempool.get(Txid::FromUint256(txid));
         if (tx) {
             mempool.removeRecursive(*tx, MemPoolRemovalReason::MANUAL);
             return true;
