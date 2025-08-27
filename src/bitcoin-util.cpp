@@ -132,12 +132,12 @@ static int Grind(const std::vector<std::string>& args, std::string& strPrint)
 
     std::vector<std::thread> threads;
     uint16_t n_tasks = std::max(1u, std::thread::hardware_concurrency());
-    // if(gArgs.IsArgSet("-ntasks")) {
-    //     if(!ParseUInt16(gArgs.GetArg("-ntasks", "1"), &n_tasks)) {
-    //         strPrint = strprintf("Argument to -ntasks should be a number, found %s\n", *gArgs.GetArg("-ntasks"));
-    //         return EXIT_FAILURE;
-    //     }
-    // }
+    if(gArgs.IsArgSet("-ntasks")) {
+        if(!ParseUInt16(gArgs.GetArg("-ntasks", "1"), &n_tasks)) {
+            strPrint = strprintf("Argument to -ntasks should be a number, found %s\n", *gArgs.GetArg("-ntasks"));
+            return EXIT_FAILURE;
+        }
+    }
     threads.reserve(n_tasks);
     for (int i = 0; i < n_tasks; ++i) {
         threads.emplace_back(grind_task, nBits, header, i, n_tasks, std::ref(found), std::ref(proposed_nonce));
