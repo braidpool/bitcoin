@@ -38,21 +38,21 @@ logging.basicConfig(
 # "cpunet" to the end of the block header and hash that instead. It should match
 # src/primitives/block.cpp:13, CBlockHeader::GetHash()
 # This is copied/modifed from test/functional/test_framework/messages.py:732
-def CBlockHeader_calc_sha256(self):
-    if self.sha256 is None:
-        r = b""
-        r += self.nVersion.to_bytes(4, "little", signed=True)
-        r += ser_uint256(self.hashPrevBlock)
-        r += ser_uint256(self.hashMerkleRoot)
-        r += self.nTime.to_bytes(4, "little")
-        r += self.nBits.to_bytes(4, "little")
-        r += self.nNonce.to_bytes(4, "little")
-        r += b"cpunet\x00"
-        self.sha256 = uint256_from_str(hash256(r))
-        self.hash = hash256(r)[::-1].hex()
+def CBlockHeader_hash_hex(self):
+    r = self._serialize_header()
+    r += b"cpunet\x00"
+    return hash256(r)[::-1].hex()
 
-CBlock.old_calc_sha256 = CBlock.calc_sha256
-CBlockHeader.calc_sha256 = CBlockHeader_calc_sha256
+def CBlockHeader_hash_int(self):
+    r = self._serialize_header()
+    r += b"cpunet\x00"
+    return uint256_from_str(hash256(r))
+
+CBlockHeader.old_hash_hex = CBlockHeader.hash_hex
+CBlockHeader.hash_hex = CBlockHeader_hash_hex
+
+CBlockHeader.old_hash_int = CBlockHeader.hash_int
+CBlockHeader.hash_int = CBlockHeader_hash_int
 
 class CPUMiner():
     def __init__(self, args):
@@ -183,7 +183,6 @@ class CPUMiner():
                           script_BIP34_coinbase_height(tmpl["height"]), 0xffffffff)]
         cbtx.vout = [CTxOut(tmpl["coinbasevalue"], self.reward_spk)]
         cbtx.vin[0].nSequence = 2**32-2
-        cbtx.rehash()
 
         # Construct block
         block = CBlock()
@@ -221,17 +220,18 @@ class CPUMiner():
             self.mined_blocks += 1
             newhead = from_hex(CBlockHeader(), stdout.decode('utf8'))
             block.nNonce = newhead.nNonce
-            block.rehash()
 
             # Submit block
             r = await self.bitcoin_cli("-stdin", "submitblock", input=block.serialize().hex().encode('utf8'))
             logging.debug("Submitting block: %s", block.serialize().hex())
             if r != "":
-                logging.warning("submitblock returned %s for height %d hash %s", r, tmpl["height"], block.hash)
+                logging.warning("submitblock returned %s for height %d hash %s",
+                                r, tmpl["height"], block.hash_hex())
 
             # Report
-            logging.info("Mined a block solution at height %d with hash: %s"%(tmpl["height"], block.hash))
-            logging.debug("Block hash %s payout to %s", block.hash, self.reward_addr)
+            logging.info("Mined a block solution at height %d with hash: %s"%(tmpl["height"],
+                                                                              block.hash_hex()))
+            logging.debug("Block hash %s payout to %s", block.hash_hex(), self.reward_addr)
             logging.debug("Solved block is %s", block)
 
         # Run the next iteration

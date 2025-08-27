@@ -18,49 +18,46 @@ have `-cpunet` or they will fail.
 
 1. Compile CPUNet:
 
-        ./configure make -j16
+        cmake -B build -DWITH_ZMQ=ON -DENABLE_IPC=ON -DENABLE_WALLET=OFF
+        cmake --build build
 
 2. Run cpunet node:
 
-        src/bitcoind -cpunet -zmqpubsequence=tcp://127.0.0.1:28338
+        build/bin/bitcoind -cpunet -zmqpubsequence=tcp://127.0.0.1:28338
 
     or
 
         # if you have already created the wallet
-        src/bitcoind -cpunet -wallet=cpunet -zmqpubsequence=tcp://127.0.0.1:28338
+        build/bin/bitcoind -cpunet -wallet=cpunet -zmqpubsequence=tcp://127.0.0.1:28338
 
 3. Create and open a wallet: (only needs to be done once)
 
-        src/bitcoin-cli -cpunet createwallet cpunet
-        src/bitcoin-cli -cpunet loadwallet cpunet
+        build/bin/bitcoin-cli -cpunet createwallet cpunet
+        build/bin/bitcoin-cli -cpunet loadwallet cpunet
 
 4. Generate blocks:
 
-        contrib/cpunet/miner --cli=src/bitcoin-cli --ongoing --address `src/bitcoin-cli -cpunet getnewaddress` --grind-cmd="src/bitcoin-util -cpunet -ntasks=1 grind"
+        contrib/cpunet/miner --cli=build/bin/bitcoin-cli --ongoing --address `build/bin/bitcoin-cli -cpunet getnewaddress` --grind-cmd="build/bin/bitcoin-util -cpunet -ntasks=1 grind"
 
 TODO
 ====
 
-1. Set up a seed node so we can find peers
-
-2. Create a docker container to run this
-
-3. Add an argument -my-block-latency artificial latency parameter that will
+1. Add an argument -my-block-latency artificial latency parameter that will
    delay starting mining a new block when the block found is mine.
 
-4. Add an argument -other-block-latency artificial latency parameter that will
+2. Add an argument -other-block-latency artificial latency parameter that will
    delay starting mining a new block when a new block is found by another miner
    and announced to contrib/cpunet/miner via ZMQ. (Related to "Clean Jobs"
    stratum parameter)
 
-5. Add SV2 support and use an external SV2 miner instead of bitcoin-utils
+3. Add SV2 support and use an external SV2 miner instead of bitcoin-utils
 
-6. Add a -share-difficulty argument to mine shares of lower difficulty than the
+4. Add a -share-difficulty argument to mine shares of lower difficulty than the
    block target
 
-7. Add a -share-cmd to submit shares to a pool.
+5. Add a -share-cmd to submit shares to a pool.
 
-8. The way I changed the PoW hash means that it screws up mainnet, signet, and
+6. The way I changed the PoW hash means that it screws up mainnet, signet, and
    the testnets and assertions have to be commented out. Therefore this cannot
    be merged into Bitcoin unless we find a way to detect `-cpunet` and calculate
    the block hash differently. I don't see a way to get the network parameters
