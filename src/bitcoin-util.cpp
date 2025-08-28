@@ -133,8 +133,15 @@ static int Grind(const std::vector<std::string>& args, std::string& strPrint)
     std::vector<std::thread> threads;
     uint16_t n_tasks = std::max(1u, std::thread::hardware_concurrency());
     if(gArgs.IsArgSet("-ntasks")) {
-        if(!ParseUInt16(gArgs.GetArg("-ntasks", "1"), &n_tasks)) {
-            strPrint = strprintf("Argument to -ntasks should be a number, found %s\n", *gArgs.GetArg("-ntasks"));
+        const auto ntasks_str = *gArgs.GetArg("-ntasks");
+        try {
+            n_tasks = std::stoi(ntasks_str);
+            if (n_tasks <= 0 || n_tasks > std::thread::hardware_concurrency()) {
+                strPrint = strprintf("Argument to -ntasks must be a positive number less than or equal to the number of cores %u, found %s\n", std::thread::hardware_concurrency(), ntasks_str);
+                return EXIT_FAILURE;
+            }
+        } catch (const std::exception&) {
+            strPrint = strprintf("Argument to -ntasks should be a number, found %s\n", ntasks_str);
             return EXIT_FAILURE;
         }
     }
