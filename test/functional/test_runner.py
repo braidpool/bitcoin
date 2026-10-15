@@ -233,6 +233,7 @@ BASE_SCRIPTS = [
     'p2p_addrfetch.py',
     'rpc_net.py --v1transport',
     'rpc_net.py --v2transport',
+    'rpc_mempool_info.py',
     'wallet_keypool.py',
     'wallet_descriptor.py',
     'p2p_nobloomfilter_messages.py',

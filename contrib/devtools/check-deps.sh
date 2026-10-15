@@ -47,6 +47,10 @@ declare -A SUPPRESS
 # https://github.com/bitcoin/bitcoin/issues/10102
 SUPPRESS["common.cpp.o interface_ui.cpp.o _Z11InitWarningRK13bilingual_str"]=1
 SUPPRESS["common.cpp.o interface_ui.cpp.o _Z9InitErrorRK13bilingual_str"]=1
+# CBlockHeader::GetHash() applies the CPUNET hash domain separator based on
+# the selected application chain.
+SUPPRESS["block.cpp.o args.cpp.o _ZNK11ArgsManager18GetChainTypeStringB5cxx11Ev"]=1
+SUPPRESS["block.cpp.o chaintype.cpp.o _Z17ChainTypeToStringB5cxx119ChainType"]=1
 
 usage() {
    echo "Usage: $(basename "${BASH_SOURCE[0]}") [BUILD_DIR]"

@@ -107,6 +107,7 @@ target_link_libraries(bitcoinkernel
     $<TARGET_NAME_IF_EXISTS:USDT::headers>
     Boost::headers
 )
+target_compile_definitions(bitcoinkernel PRIVATE BITCOIN_KERNEL)
 
 target_include_directories(bitcoinkernel PRIVATE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src/leveldb/include>)
 
