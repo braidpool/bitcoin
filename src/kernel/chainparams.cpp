@@ -17,7 +17,6 @@
 #include <script/interpreter.h>
 #include <script/script.h>
 #include <script/verify_flags.h>
-#include <streams.h>
 #include <uint256.h>
 #include <util/chaintype.h>
 #include <util/log.h>
@@ -28,6 +27,7 @@
 #include <cassert>
 #include <cstdint>
 #include <cstring>
+#include <initializer_list>
 #include <iterator>
 #include <map>
 #include <span>
@@ -506,7 +506,7 @@ public:
         m_assumed_chain_state_size = 0;
 
         const char* cpunet_genesis_msg = "03/May/2024 000000000000000000001ebd58c244970b3aa9d783bb001011fbe8ea8e98e00e";
-        const CScript cpunet_genesis_script = CScript() << ParseHex("000000000000000000000000000000000000000000000000000000000000000000") << OP_CHECKSIG;
+        const CScript cpunet_genesis_script = CScript() << "000000000000000000000000000000000000000000000000000000000000000000"_hex << OP_CHECKSIG;
         genesis = CreateGenesisBlock(cpunet_genesis_msg,
                 cpunet_genesis_script,
                 1723652721,
@@ -514,9 +514,7 @@ public:
                 0x1d00ffff,
                 1,
                 50 * COIN);
-        consensus.hashGenesisBlock = genesis.GetHash();
-        //std::cerr << "CPUNet Genesis Block header: "
-        //    << HexStr(DataStream{} << genesis.GetBlockHeader() << "cpunet") << std::endl;
+        consensus.hashGenesisBlock = (HashWriter{} << static_cast<const CBlockHeader&>(genesis) << "cpunet").GetHash();
         assert(consensus.hashGenesisBlock == uint256("0x00000000bbffa57733938dbc05f86239f303636de4599905ab84bccfa909f49b"));
         assert(genesis.hashMerkleRoot == uint256("0x7aa0a7ae1e223414cb807e40cd57e667b718e42aaf9306db9102fe28912b7b4e"));
 
@@ -639,7 +637,7 @@ public:
 
         genesis = CreateGenesisBlock(1598918400, 52613770, 0x1e0377ae, 1, 50 * COIN);
         consensus.hashGenesisBlock = genesis.GetHash();
-        //assert(consensus.hashGenesisBlock == uint256{"00000008819873e925422c1ff0f99f7cc9bbb232af63a077a480a3633bee1ef6"});
+        assert(consensus.hashGenesisBlock == uint256{"00000008819873e925422c1ff0f99f7cc9bbb232af63a077a480a3633bee1ef6"});
         assert(genesis.hashMerkleRoot == uint256{"4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"});
 
         m_assumeutxo_data = {
@@ -841,6 +839,8 @@ std::optional<ChainType> GetNetworkForMagic(const MessageStartChars& message)
         return ChainType::MAIN;
     } else if (std::ranges::equal(message, testnet_msg)) {
         return ChainType::TESTNET;
+    } else if (std::ranges::equal(message, testnet4_msg)) {
+        return ChainType::TESTNET4;
     } else if (std::equal(message.begin(), message.end(), cpunet_msg.data())) {
         return ChainType::CPUNET;
     } else if (std::equal(message.begin(), message.end(), regtest_msg.data())) {
