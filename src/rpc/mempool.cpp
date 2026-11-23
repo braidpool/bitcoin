@@ -469,9 +469,9 @@ static RPCMethod testmempoolaccept()
 }
 
 
-static RPCHelpMan removetxfrommempool()
+static RPCMethod removetxfrommempool()
 {
-    return RPCHelpMan{"removetxfrommempool",
+    return RPCMethod{"removetxfrommempool",
         "Removes a transaction from the mempool.\n"
         "This can be used for testing purposes, removing stuck transactions, or clearing conflicting transactions.\n"
         "\nWarning: This will remove the specified transaction AND all of its descendants from the mempool.\n"
@@ -489,7 +489,7 @@ static RPCHelpMan removetxfrommempool()
             HelpExampleCli("removetxfrommempool", "\"mytxid\"")
             + HelpExampleRpc("removetxfrommempool", "\"mytxid\"")
         },
-        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
+        [&](const RPCMethod& self, const JSONRPCRequest& request) -> UniValue
         {
             uint256 hash = ParseHashV(request.params[0], "txid");
             NodeContext& node = EnsureAnyNodeContext(request.context);

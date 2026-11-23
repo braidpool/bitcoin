@@ -386,8 +386,7 @@ void Shutdown(NodeContext& node)
     }
 
     // Stop and delete all indexes only after flushing background callbacks.
-    for (auto* index : node.indexes)
-        index->Stop();
+    for (auto* index : node.indexes) index->Stop();
     if (g_txindex) g_txindex.reset();
     if (g_txospenderindex) g_txospenderindex.reset();
     if (g_coin_stats_index) g_coin_stats_index.reset();
@@ -465,7 +464,7 @@ static BOOL WINAPI consoleCtrlHandler(DWORD dwCtrlType)
 #endif
 
 #ifndef WIN32
-static void registerSignalHandler(int signal, void (*handler)(int))
+static void registerSignalHandler(int signal, void(*handler)(int))
 {
     struct sigaction sa;
     sa.sa_handler = handler;
@@ -554,9 +553,9 @@ void SetupServerArgs(ArgsManager& argsman, bool can_listen_ipc)
     argsman.AddArg("-txindex", strprintf("Maintain a full transaction index, used by the getrawtransaction rpc call (default: %u)", DEFAULT_TXINDEX), ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
     argsman.AddArg("-txospenderindex", strprintf("Maintain a transaction output spender index, used by the gettxspendingprevout rpc call (default: %u)", DEFAULT_TXOSPENDERINDEX), ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
     argsman.AddArg("-blockfilterindex=<type>",
-                   strprintf("Maintain an index of compact filters by block (default: %s, values: %s).", DEFAULT_BLOCKFILTERINDEX, ListBlockFilterTypes()) +
-                       " If <type> is not supplied or if <type> = 1, indexes for all known types are enabled.",
-                   ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
+                 strprintf("Maintain an index of compact filters by block (default: %s, values: %s).", DEFAULT_BLOCKFILTERINDEX, ListBlockFilterTypes()) +
+                 " If <type> is not supplied or if <type> = 1, indexes for all known types are enabled.",
+                 ArgsManager::ALLOW_ANY, OptionsCategory::OPTIONS);
 
     argsman.AddArg("-addnode=<ip>", strprintf("Add a node to connect to and attempt to keep the connection open (see the addnode RPC help for more info). This option can be specified multiple times to add multiple nodes; connections are limited to %u at a time and are counted separately from the -maxconnections limit.", MAX_ADDNODE_CONNECTIONS), ArgsManager::ALLOW_ANY | ArgsManager::NETWORK_ONLY, OptionsCategory::CONNECTION);
     argsman.AddArg("-asmap=<file>", strprintf("Specify asn mapping used for bucketing of the peers. Relative paths will be prefixed by the net-specific datadir location.%s",
@@ -567,7 +566,7 @@ void SetupServerArgs(ArgsManager& argsman, bool can_listen_ipc)
                 #endif
                 ), ArgsManager::ALLOW_ANY, OptionsCategory::CONNECTION);
     argsman.AddArg("-bantime=<n>", strprintf("Default duration (in seconds) of manually configured bans (default: %u)", DEFAULT_MISBEHAVING_BANTIME), ArgsManager::ALLOW_ANY, OptionsCategory::CONNECTION);
-    argsman.AddArg("-bind=<addr>[:<port>][=onion]", strprintf("Bind to given address and always listen on it (default: 0.0.0.0). Use [host]:port notation for IPv6. Append =onion to tag any incoming connections to that address and port as incoming Tor connections (default: 127.0.0.1:%u=onion, testnet3: 127.0.0.1:%u=onion, testnet4: 127.0.0.1:%u=onion, cpunet: 127.0.0.1:%u=onion, signet: 127.0.0.1:%u=onion, regtest: 127.0.0.1:%u=onion)", defaultBaseParams->OnionServiceTargetPort(), testnetBaseParams->OnionServiceTargetPort(), testnet4BaseParams->OnionServiceTargetPort(), cpunetBaseParams->OnionServiceTargetPort(), signetBaseParams->OnionServiceTargetPort(), regtestBaseParams->OnionServiceTargetPort()), ArgsManager::ALLOW_ANY | ArgsManager::NETWORK_ONLY, OptionsCategory::CONNECTION);
+    argsman.AddArg("-bind=<addr>[:<port>][=onion]", strprintf("Bind to given address and always listen on it (default: 0.0.0.0). Use [host]:port notation for IPv6. Append =onion to tag any incoming connections to that address and port as incoming Tor connections (default: 127.0.0.1:%u=onion, testnet3: 127.0.0.1:%u=onion, testnet4: 127.0.0.1:%u=onion, cpunet: 127.0.0.1:%u=onion, signet: 127.0.0.1:%u=onion, regtest: 127.0.0.1:%u=onion)", defaultChainParams->GetDefaultPort() + 1, testnetChainParams->GetDefaultPort() + 1, testnet4ChainParams->GetDefaultPort() + 1, cpunetChainParams->GetDefaultPort() + 1, signetChainParams->GetDefaultPort() + 1, regtestChainParams->GetDefaultPort() + 1), ArgsManager::ALLOW_ANY | ArgsManager::NETWORK_ONLY, OptionsCategory::CONNECTION);
     argsman.AddArg("-cjdnsreachable", "If set, then this host is configured for CJDNS (connecting to fc00::/8 addresses would lead us to the CJDNS network, see doc/cjdns.md) (default: 0)", ArgsManager::ALLOW_ANY, OptionsCategory::CONNECTION);
     argsman.AddArg("-connect=<ip>", "Connect only to the specified node; -noconnect disables automatic connections (the rules for this peer are the same as for -addnode). This option can be specified multiple times to connect to multiple nodes.", ArgsManager::ALLOW_ANY | ArgsManager::NETWORK_ONLY, OptionsCategory::CONNECTION);
     argsman.AddArg("-discover", "Discover own IP addresses (default: 1 when listening and no -externalip or -proxy)", ArgsManager::ALLOW_ANY, OptionsCategory::CONNECTION);
@@ -599,7 +598,7 @@ void SetupServerArgs(ArgsManager& argsman, bool can_listen_ipc)
     argsman.AddArg("-peerbloomfilters", strprintf("Support filtering of blocks and transaction with bloom filters (default: %u)", DEFAULT_PEERBLOOMFILTERS), ArgsManager::ALLOW_ANY, OptionsCategory::CONNECTION);
     argsman.AddArg("-peerblockfilters", strprintf("Serve compact block filters to peers per BIP 157 (default: %u)", DEFAULT_PEERBLOCKFILTERS), ArgsManager::ALLOW_ANY, OptionsCategory::CONNECTION);
     argsman.AddArg("-txreconciliation", strprintf("Enable transaction reconciliations per BIP 330 (default: %d)", DEFAULT_TXRECONCILIATION_ENABLE), ArgsManager::ALLOW_ANY | ArgsManager::DEBUG_ONLY, OptionsCategory::CONNECTION);
-    argsman.AddArg("-port=<port>", strprintf("Listen for connections on <port> (default: %u, testnet3: %u, testnet4: %u, cpunet: %u, signet: %u, regtest: %u). Not relevant for I2P (see doc/i2p.md).", defaultChainParams->GetDefaultPort(), testnetChainParams->GetDefaultPort(), testnet4ChainParams->GetDefaultPort(), cpunetChainParams->GetDefaultPort(), signetChainParams->GetDefaultPort(), regtestChainParams->GetDefaultPort()), ArgsManager::ALLOW_ANY | ArgsManager::NETWORK_ONLY, OptionsCategory::CONNECTION);
+    argsman.AddArg("-port=<port>", strprintf("Listen for connections on <port> (default: %u, testnet3: %u, testnet4: %u, cpunet: %u, signet: %u, regtest: %u). Not relevant for I2P (see doc/i2p.md). If set to a value x, the default onion listening port will be set to x+1.", defaultChainParams->GetDefaultPort(), testnetChainParams->GetDefaultPort(), testnet4ChainParams->GetDefaultPort(), cpunetChainParams->GetDefaultPort(), signetChainParams->GetDefaultPort(), regtestChainParams->GetDefaultPort()), ArgsManager::ALLOW_ANY | ArgsManager::NETWORK_ONLY, OptionsCategory::CONNECTION);
     const std::string proxy_doc_for_value =
 #ifdef HAVE_SOCKADDR_UN
         "<ip>[:<port>]|unix:<path>";
@@ -629,17 +628,14 @@ void SetupServerArgs(ArgsManager& argsman, bool can_listen_ipc)
     argsman.AddArg("-torpassword=<pass>", "Tor control port password (default: empty)", ArgsManager::ALLOW_ANY | ArgsManager::SENSITIVE, OptionsCategory::CONNECTION);
     argsman.AddArg("-natpmp", strprintf("Use PCP or NAT-PMP to map the listening port (default: %u)", DEFAULT_NATPMP), ArgsManager::ALLOW_ANY, OptionsCategory::CONNECTION);
     argsman.AddArg("-whitebind=<[permissions@]addr>", "Bind to the given address and add permission flags to the peers connecting to it. "
-                                                      "Use [host]:port notation for IPv6. Allowed permissions: " +
-                                                          Join(NET_PERMISSIONS_DOC, ", ") + ". "
-                                                                                            "Specify multiple permissions separated by commas (default: download,noban,mempool,relay). Can be specified multiple times.",
-                   ArgsManager::ALLOW_ANY, OptionsCategory::CONNECTION);
+        "Use [host]:port notation for IPv6. Allowed permissions: " + Join(NET_PERMISSIONS_DOC, ", ") + ". "
+        "Specify multiple permissions separated by commas (default: download,noban,mempool,relay). Can be specified multiple times.", ArgsManager::ALLOW_ANY, OptionsCategory::CONNECTION);
 
     argsman.AddArg("-whitelist=<[permissions@]IP address or network>", "Add permission flags to the peers using the given IP address (e.g. 1.2.3.4) or "
-                                                                       "CIDR-notated network (e.g. 1.2.3.0/24). Uses the same permissions as "
-                                                                       "-whitebind. "
-                                                                       "Additional flags \"in\" and \"out\" control whether permissions apply to incoming connections and/or manual (default: incoming only). "
-                                                                       "Can be specified multiple times.",
-                   ArgsManager::ALLOW_ANY, OptionsCategory::CONNECTION);
+        "CIDR-notated network (e.g. 1.2.3.0/24). Uses the same permissions as "
+        "-whitebind. "
+        "Additional flags \"in\" and \"out\" control whether permissions apply to incoming connections and/or manual (default: incoming only). "
+        "Can be specified multiple times.", ArgsManager::ALLOW_ANY, OptionsCategory::CONNECTION);
 
     g_wallet_init_interface.AddWalletOptions(argsman);
 
@@ -1045,7 +1041,7 @@ bool AppInitParameterInteraction(const ArgsManager& args)
     }
 
     // If -forcednsseed is set to true, ensure -dnsseed has not been set to false
-    if (args.GetBoolArg("-forcednsseed", DEFAULT_FORCEDNSSEED) && !args.GetBoolArg("-dnsseed", DEFAULT_DNSSEED)) {
+    if (args.GetBoolArg("-forcednsseed", DEFAULT_FORCEDNSSEED) && !args.GetBoolArg("-dnsseed", DEFAULT_DNSSEED)){
         return InitError(_("Cannot set -forcednsseed to true when setting -dnsseed to false."));
     }
 
@@ -1247,7 +1243,7 @@ static bool LockDirectory(const fs::path& dir, bool probeOnly)
 }
 static bool LockDirectories(bool probeOnly)
 {
-    return LockDirectory(gArgs.GetDataDirNet(), probeOnly) &&
+    return LockDirectory(gArgs.GetDataDirNet(), probeOnly) && \
            LockDirectory(gArgs.GetBlocksDirPath(), probeOnly);
 }
 
@@ -1291,12 +1287,11 @@ bool AppInitInterfaces(NodeContext& node)
     return true;
 }
 
-bool CheckHostPortOptions(const ArgsManager& args)
-{
+bool CheckHostPortOptions(const ArgsManager& args) {
     for (const std::string port_option : {
-             "-port",
-             "-rpcport",
-         }) {
+        "-port",
+        "-rpcport",
+    }) {
         if (const auto port{args.GetArg(port_option)}) {
             const auto n{ToIntegral<uint16_t>(*port)};
             if (!n || *n == 0) {
@@ -1306,20 +1301,20 @@ bool CheckHostPortOptions(const ArgsManager& args)
     }
 
     for ([[maybe_unused]] const auto& [param_name, unix, suffix_allowed] : std::vector<std::tuple<std::string, bool, bool>>{
-             // arg name          UNIX socket support  =suffix allowed
-             {"-i2psam", false, false},
-             {"-onion", true, false},
-             {"-proxy", true, true},
-             {"-bind", false, true},
-             {"-rpcbind", false, false},
-             {"-torcontrol", false, false},
-             {"-whitebind", false, false},
-             {"-zmqpubhashblock", true, false},
-             {"-zmqpubhashtx", true, false},
-             {"-zmqpubrawblock", true, false},
-             {"-zmqpubrawtx", true, false},
-             {"-zmqpubsequence", true, false},
-         }) {
+        // arg name          UNIX socket support  =suffix allowed
+        {"-i2psam",          false,               false},
+        {"-onion",           true,                false},
+        {"-proxy",           true,                true},
+        {"-bind",            false,               true},
+        {"-rpcbind",         false,               false},
+        {"-torcontrol",      false,               false},
+        {"-whitebind",       false,               false},
+        {"-zmqpubhashblock", true,                false},
+        {"-zmqpubhashtx",    true,                false},
+        {"-zmqpubrawblock",  true,                false},
+        {"-zmqpubrawtx",     true,                false},
+        {"-zmqpubsequence",  true,                false},
+    }) {
         for (const std::string& param_value : args.GetArgs(param_name)) {
             const std::string param_value_hostport{
                 suffix_allowed ? param_value.substr(0, param_value.rfind('=')) : param_value};
@@ -1539,10 +1534,9 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
     scheduler.m_service_thread = std::thread(util::TraceThread, "scheduler", [&] { scheduler.serviceQueue(); });
 
     // Gather some entropy once per minute.
-    scheduler.scheduleEvery([] {
+    scheduler.scheduleEvery([]{
         RandAddPeriodic();
-    },
-                            std::chrono::minutes{1});
+    }, std::chrono::minutes{1});
 
     // Check disk space every 5 minutes to avoid db corruption.
     scheduler.scheduleEvery([&args, &node]{
@@ -1553,8 +1547,7 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
                 LogError("Failed to send shutdown signal after disk space check\n");
             }
         }
-    },
-                            std::chrono::minutes{5});
+    }, std::chrono::minutes{5});
 
     if (args.GetBoolArg("-logratelimit", BCLog::DEFAULT_LOGRATELIMIT)) {
         LogInstance().SetRateLimiting(BCLog::LogRateLimiter::Create(
@@ -1747,7 +1740,7 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
     strSubVersion = FormatSubVersion(UA_NAME, CLIENT_VERSION, uacomments);
     if (strSubVersion.size() > MAX_SUBVERSION_LENGTH) {
         return InitError(strprintf(_("Total length of network version string (%i) exceeds maximum length (%i). Reduce the number or size of uacomments."),
-                                   strSubVersion.size(), MAX_SUBVERSION_LENGTH));
+            strSubVersion.size(), MAX_SUBVERSION_LENGTH));
     }
 
     // Requesting DNS seeds entails connecting to IPv4/IPv6, which -onlynet options may prohibit:
@@ -1997,7 +1990,7 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
     }
 
     for (const auto& filter_type : g_enabled_filter_types) {
-        InitBlockFilterIndex([&] { return interfaces::MakeChain(node); }, filter_type, index_cache_sizes.filter_index, false, do_reindex);
+        InitBlockFilterIndex([&]{ return interfaces::MakeChain(node); }, filter_type, index_cache_sizes.filter_index, false, do_reindex);
         node.indexes.emplace_back(GetBlockFilterIndex(filter_type));
     }
 
@@ -2007,8 +2000,7 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
     }
 
     // Init indexes
-    for (auto index : node.indexes)
-        if (!index->Init()) return false;
+    for (auto index : node.indexes) if (!index->Init()) return false;
 
     // ********************************************************* Step 9: load wallet
     for (const auto& client : node.chain_clients) {
@@ -2062,10 +2054,12 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
 
         if (!CheckDiskSpace(args.GetBlocksDirPath(), additional_bytes_needed)) {
             InitWarning(strprintf(_(
-                                      "Disk space for %s may not accommodate the block files. "
-                                      "Approximately %u GB of data will be stored in this directory."),
-                                  fs::quoted(fs::PathToString(args.GetBlocksDirPath())),
-                                  chainparams.AssumedBlockchainSize()));
+                    "Disk space for %s may not accommodate the block files. " \
+                    "Approximately %u GB of data will be stored in this directory."
+                ),
+                fs::quoted(fs::PathToString(args.GetBlocksDirPath())),
+                chainparams.AssumedBlockchainSize()
+            ));
         }
     }
 
@@ -2423,10 +2417,9 @@ bool AppInitMain(NodeContext& node, interfaces::BlockAndHeaderTipInfo* tip_info)
     }
 
     BanMan* banman = node.banman.get();
-    scheduler.scheduleEvery([banman] {
+    scheduler.scheduleEvery([banman]{
         banman->DumpBanlist();
-    },
-                            DUMP_BANS_INTERVAL);
+    }, DUMP_BANS_INTERVAL);
 
     if (node.peerman) node.peerman->StartScheduledTasks(scheduler);
 
@@ -2510,7 +2503,6 @@ bool StartIndexBackgroundSync(NodeContext& node)
     }
 
     // Start threads
-    for (auto index : node.indexes)
-        if (!index->StartBackgroundSync()) return false;
+    for (auto index : node.indexes) if (!index->StartBackgroundSync()) return false;
     return true;
 }

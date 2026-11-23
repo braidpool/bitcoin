@@ -1026,7 +1026,7 @@ public:
 
     bool removeTxFromMempool(const uint256& txid) override
     {
-        NodeContext& node = m_node;
+        const NodeContext& node = m_node;
         if (!node.mempool) return false;
         CTxMemPool& mempool = *node.mempool;
         LOCK(mempool.cs);
