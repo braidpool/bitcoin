@@ -167,5 +167,6 @@ std::unique_ptr<const CChainParams> CreateChainParams(const ArgsManager& args, c
 void SelectParams(const ChainType chain)
 {
     SelectBaseParams(chain);
+    g_cpunet_block_hash = (chain == ChainType::CPUNET);
     globalChainParams = CreateChainParams(gArgs, chain);
 }

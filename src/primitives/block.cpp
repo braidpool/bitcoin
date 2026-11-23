@@ -5,21 +5,17 @@
 
 #include <primitives/block.h>
 
-#include <common/args.h>
 #include <hash.h>
 #include <tinyformat.h>
-#include <util/chaintype.h>
 
 #include <memory>
 #include <sstream>
 
+bool g_cpunet_block_hash{false};
+
 uint256 CBlockHeader::GetHash() const
 {
-#ifndef BITCOIN_KERNEL
-    if (gArgs.GetChainTypeString() == ChainTypeToString(ChainType::CPUNET)) {
-        return (HashWriter{} << *this << "cpunet").GetHash();
-    }
-#endif
+    if (g_cpunet_block_hash) return (HashWriter{} << *this << "cpunet").GetHash();
     return (HashWriter{} << *this).GetHash();
 }
 

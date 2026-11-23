@@ -27,7 +27,6 @@
 #include <cassert>
 #include <cstdint>
 #include <cstring>
-#include <initializer_list>
 #include <iterator>
 #include <map>
 #include <span>
@@ -529,12 +528,6 @@ public:
 
         fDefaultConsistencyChecks = false;
         m_is_mockable_chain = false;
-
-        // checkpointData = {
-        //     {
-        //         {},
-        //     }
-        // };
 
         m_assumeutxo_data = {
             {}
